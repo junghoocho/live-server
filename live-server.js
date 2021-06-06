@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 var path = require('path');
 var fs = require('fs');
-var assign = require('object-assign');
 var liveServer = require("./index");
 
 var opts = {
@@ -18,7 +17,7 @@ var homeDir = process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME
 var configPath = path.join(homeDir, '.live-server.json');
 if (fs.existsSync(configPath)) {
 	var userConfig = fs.readFileSync(configPath, 'utf8');
-	assign(opts, JSON.parse(userConfig));
+	Object.assign(opts, JSON.parse(userConfig));
 	if (opts.ignorePattern) opts.ignorePattern = new RegExp(opts.ignorePattern);
 }
 
