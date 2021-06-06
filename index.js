@@ -113,19 +113,17 @@ function entryPoint(staticHandler, file) {
 }
 
 /**
- * Build an HTML file from a markdown file
- * @param input {string} Path to the markdown file
- * TODO: HTML build command, template file names are hard coded
- *       Make it more flexible (Take them as command-line parameter?)
+ * Build an HTML file from a markdown file using a build command
+ * @param cmd {string} Shell command to execute to build the HTML
+ * @param input {string} Path to the input markdown file
  */
-function buildHtml(input) {
-    // get the template and output filenames
-    let template = path.dirname(input) + "/slides.html";
+function buildHtml(cmd, input) {
+    // get the output filename
     let output = input.substr(0, input.lastIndexOf(".")) + ".html";
 
     // run the build command
     let exec = require('child_process').exec, child;
-    child = exec(`node libs/render/index.js -s -t ${template} -m ${input} > ${output}`,
+    child = exec(`${cmd} < ${input} > ${output}`,
         function (error, stdout, stderr) {
             if (error !== null) {
                  console.log('exec error: ' + error);
@@ -174,6 +172,7 @@ LiveServer.start = function(options) {
 	var middleware = options.middleware || [];
 	var noCssInject = options.noCssInject;
 	var httpsModule = options.httpsModule;
+    var buildCmd = options.buildCmd;
 
 	if (httpsModule) {
 		try {
@@ -394,11 +393,15 @@ LiveServer.start = function(options) {
 	}
 	LiveServer.watcher
 		.on("change", (changePath) => {
-            if (path.extname(changePath) === ".md")  buildHtml(changePath);
+            if (buildCmd && path.extname(changePath) === ".md") {
+                buildHtml(buildCmd, changePath);
+            }
             handleChange(changePath);
         })
 		.on("add", (changePath) => {
-            if (path.extname(changePath) === ".md")  buildHtml(changePath);
+            if (buildCmd && path.extname(changePath) === ".md") {
+                buildHtml(buildCmd, changePath);
+            }
             handleChange(changePath);
         })
 		.on("unlink", handleChange)
