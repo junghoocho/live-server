@@ -113,6 +113,29 @@ function entryPoint(staticHandler, file) {
 }
 
 /**
+ * Build an HTML file from a markdown file
+ * @param input {string} Path to the markdown file
+ * TODO: HTML build command, template file names are hard coded
+ *       Make it more flexible (Take them as command-line parameter?)
+ */
+function buildHtml(input) {
+    // get the template and output filenames
+    let template = path.dirname(input) + "/slides.html";
+    let output = input.substr(0, input.lastIndexOf(".")) + ".html";
+
+    // run the build command
+    let exec = require('child_process').exec, child;
+    child = exec(`node libs/render/index.js -s -t ${template} -m ${input} > ${output}`,
+        function (error, stdout, stderr) {
+            if (error !== null) {
+                 console.log('exec error: ' + error);
+                 console.log('stderr: ' + stderr);
+            }
+        }
+    );
+}
+
+/**
  * Start a live server with parameters given as an object
  * @param host {string} Address to bind to (default: 0.0.0.0)
  * @param port {number} Port number (default: 8080)
@@ -370,8 +393,14 @@ LiveServer.start = function(options) {
 		});
 	}
 	LiveServer.watcher
-		.on("change", handleChange)
-		.on("add", handleChange)
+		.on("change", (changePath) => {
+            if (path.extname(changePath) === ".md")  buildHtml(changePath);
+            handleChange(changePath);
+        })
+		.on("add", (changePath) => {
+            if (path.extname(changePath) === ".md")  buildHtml(changePath);
+            handleChange(changePath);
+        })
 		.on("unlink", handleChange)
 		.on("addDir", handleChange)
 		.on("unlinkDir", handleChange)
