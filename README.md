@@ -2,6 +2,44 @@
 [![npm module downloads per month](http://img.shields.io/npm/dm/live-server.svg)](https://www.npmjs.org/package/live-server)
 [![build status](https://travis-ci.org/tapio/live-server.svg)](https://travis-ci.org/tapio/live-server)
 
+Modified Live Server
+====================
+
+I have modified the the original live-server as follows:
+
+1. Add `--build-cmd=CMD` option, so that if a change to a markdown file is detected `CMD` is automatically executed. `CMD` must take the markdown input from stdin and the generated HTML output to stdout.
+2. Make it possible to package live-server into a single JavaScript file. This change required the following changes:
+    -   Add `webpack.config.js` file, the code can be packaged with `webpack`
+    -   Embed `injected.html` into `index.js`
+    -   Comment out `#!/usr/bin/env node` at the beginning of `index.js` and `live-server.js`
+    -   Two third-party modules, `http-auth` and `batch`, that are needed by `live-server` have inadequate dependency specification in their `package.json` and throws errors when `webpack` is executed. The following changes must be made to fix the errors:
+        -   `node_modules/batch/index.js`: comment out `require('emitter');`
+            ```javascript
+            try {
+                var EventEmitter = require('events').EventEmitter;
+                if (!EventEmitter) throw new Error();
+            } catch (err) {
+                // var Emitter = require('emitter');
+            }
+            ```
+        -   `node_modules/http-auth/src/server/passport.js`: comment out dependency on `require('passport');`
+            ```javascript
+            //const passport  = require('passport');
+            ...
+                //passport.Strategy.call(this);
+            ...
+            //util.inherits(HttpStrategy, passport.Strategy);
+            ```
+        -   `node_modules/http-auth/src/http-auth.js`: comment out http-proxy integration
+            ```javascript
+            // http-proxy integration.
+            //if (utils.isAvailable('http-proxy')) {
+            //    require('./server/proxy');
+            //}
+            ```
+
+You can produce the `build/live-server.js` file by simply executing `webpack` in the project directory. Once the file is created, you can make it an executable file by adding `#!/usr/bin/env node` at the beginning of the file and setting its executable bit.
+
 Live Server
 ===========
 
